@@ -1,772 +1,378 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uptown Cash Buyers LLC — Weekly KPI Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Uptown Cash Buyers // Weekly Performance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #06070b; --grid: rgba(120,140,255,0.045); --surface: rgba(18,21,30,0.72);
+    --border: rgba(255,255,255,0.08); --border-hi: rgba(140,160,255,0.35);
+    --text: #e8ecf4; --text-2: #8b93a7; --text-3: #565d70;
+    --purple: #9d8bff; --pink: #ff5d9e; --teal: #2ff5c8; --amber: #ffb53d; --blue: #5d9bff;
+    --danger: #ff5f6d; --success: #2ff5c8;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(157,139,255,0.10), transparent 60%),
+      radial-gradient(700px 400px at 0% 110%, rgba(47,245,200,0.06), transparent 55%),
+      var(--bg);
+    background-attachment: fixed; color: var(--text); font-family: var(--sans); padding: 34px; min-height: 100vh; position: relative;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: radial-gradient(circle at 50% 25%, #000 60%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at 50% 25%, #000 60%, transparent 100%);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; position: relative; z-index: 1; }
 
-        :root {
-            color-scheme: dark;
-            --bg-primary: #0F1419;
-            --bg-card: #1A202C;
-            --bg-input: #374151;
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-primary: #FFFFFF;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-muted: rgba(255, 255, 255, 0.5);
-            --accent-success: #00D97E;
-            --accent-danger: #FF4757;
-            --accent-cyan: #0EA5E9;
-            --accent-blue: #3B82F6;
-            --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
+  .header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 26px; flex-wrap: wrap; gap: 12px; }
+  .header .lhs h1 { font-family: var(--mono); font-size: 20px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; }
+  .header .lhs p { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-top: 7px; letter-spacing: 0.14em; text-transform: uppercase; }
+  .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .wk { display: flex; flex-direction: column; gap: 5px; }
+  .wk label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-3); padding-left: 2px; }
+  .wk .sel { position: relative; }
+  .wk select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border-hi); border-radius: 4px;
+    padding: 8px 34px 8px 12px; cursor: pointer; letter-spacing: 0.02em; outline: none; backdrop-filter: blur(8px);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .wk select:hover, .wk select:focus { border-color: var(--purple); box-shadow: 0 0 0 1px rgba(157,139,255,0.25), 0 0 18px rgba(157,139,255,0.15); }
+  .wk select option { background: #12151e; color: var(--text); }
+  .wk .sel::after { content: "\25BE"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--purple); font-size: 11px; }
 
-        html, body {
-            height: 100%;
-        }
+  .row5 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+  .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+  @media (max-width: 980px) { .row5 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 720px) { .row5 { grid-template-columns: repeat(2, 1fr); } .row3 { grid-template-columns: 1fr; } body { padding: 18px; } }
+  @media (max-width: 440px) { .row5 { grid-template-columns: 1fr; } }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            padding: 32px;
-        }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 34px 28px; position: relative; overflow: hidden; backdrop-filter: blur(8px); transition: border-color .2s, transform .2s; }
+  .card:hover { transform: translateY(-2px); border-color: var(--border-hi); }
+  .card .corner { position: absolute; top: 9px; right: 9px; width: 14px; height: 14px; border-top: 1.5px solid var(--border-hi); border-right: 1.5px solid var(--border-hi); opacity: .5; }
+  .card .corner.bl { top: auto; right: auto; bottom: 9px; left: 9px; border-top: 0; border-right: 0; border-bottom: 1.5px solid var(--border-hi); border-left: 1.5px solid var(--border-hi); }
+  .card .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .card.leads  .bar { background: var(--purple); box-shadow: 0 0 14px var(--purple); }
+  .card.dials  .bar { background: var(--pink);   box-shadow: 0 0 14px var(--pink); }
+  .card.convos .bar { background: var(--teal);   box-shadow: 0 0 14px var(--teal); }
+  .card.booked .bar { background: var(--amber);  box-shadow: 0 0 14px var(--amber); }
+  .card.pickups .bar { background: var(--blue);  box-shadow: 0 0 14px var(--blue); }
+  .card.rate   .bar { background: var(--amber);  box-shadow: 0 0 14px var(--amber); }
+  .card.close  .bar { background: var(--teal);   box-shadow: 0 0 14px var(--teal); }
+  .card.focus { border-color: rgba(255,181,61,0.45); box-shadow: 0 0 0 1px rgba(255,181,61,0.12), 0 0 24px rgba(255,181,61,0.10); }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+  .c-label { display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 16px; }
+  .tag { font-family: var(--mono); font-size: 9px; color: var(--amber); letter-spacing: 0.1em; border: 1px solid rgba(255,181,61,0.4); padding: 2px 6px; border-radius: 3px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .c-value { font-family: var(--mono); font-size: 60px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: #fff; }
+  .card.leads  .c-value { text-shadow: 0 0 24px rgba(157,139,255,0.40); }
+  .card.dials  .c-value { text-shadow: 0 0 24px rgba(255,93,158,0.35); }
+  .card.convos .c-value { text-shadow: 0 0 24px rgba(47,245,200,0.35); }
+  .card.booked .c-value { text-shadow: 0 0 24px rgba(255,181,61,0.35); }
+  .card.sm { padding: 18px 18px; }
+  .card.sm .c-value { font-size: 32px; }
+  .card.pickups .c-value { text-shadow: 0 0 24px rgba(93,155,255,0.35); }
+  .card.rate  .c-value { text-shadow: 0 0 24px rgba(255,181,61,0.35); }
+  .card.close .c-value { text-shadow: 0 0 24px rgba(47,245,200,0.35); }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
-            gap: 32px;
-        }
+  .rp { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 4px; border: 1px solid; letter-spacing: 0.02em; }
+  .rp .lbl { color: var(--text-3); font-weight: 400; letter-spacing: 0.04em; }
+  .rp.neutral { background: rgba(140,160,255,0.07); color: var(--text-2); border-color: rgba(140,160,255,0.18); }
+  .rp.good { background: rgba(47,245,200,0.08); color: var(--teal); border-color: rgba(47,245,200,0.25); }
+  .rp.warn { background: rgba(255,181,61,0.09); color: var(--amber); border-color: rgba(255,181,61,0.30); }
+  .rp.blue { background: rgba(93,155,255,0.09); color: var(--blue); border-color: rgba(93,155,255,0.28); }
 
-        .header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex: 1;
-        }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; margin-bottom: 18px; backdrop-filter: blur(8px); position: relative; }
+  .panel .corner { position: absolute; top: 10px; left: 10px; width: 14px; height: 14px; border-top: 1.5px solid var(--border-hi); border-left: 1.5px solid var(--border-hi); opacity: .45; }
+  .panel-title { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 20px; padding-left: 18px; }
 
-        .header-left h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0;
-            color: var(--text-primary);
-            letter-spacing: -0.5px;
-        }
+  .funnel { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .stage { text-align: center; flex: 1; min-width: 0; }
+  .stage .num { font-family: var(--mono); font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+  .stage .cap { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .conv { flex: 0 0 auto; min-width: 88px; text-align: center; }
+  .conv .rate { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text-2); }
+  .conv .rate.warn { color: var(--amber); text-shadow: 0 0 14px rgba(255,181,61,0.4); }
+  .conv .rate.good { color: var(--success); text-shadow: 0 0 14px rgba(47,245,200,0.4); }
+  .conv .rlbl { font-family: var(--mono); font-size: 9px; color: var(--text-3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .conv .line { height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--border-hi), transparent); margin-top: 9px; }
+  .conv .line.warn { background: linear-gradient(90deg, transparent, var(--amber), transparent); box-shadow: 0 0 10px rgba(255,181,61,0.4); }
 
-        .header-subtitle {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 400;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
+  .charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 18px; }
+  @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+  .chart-wrap { position: relative; height: 240px; }
 
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            white-space: nowrap;
-        }
+  .alert { display: flex; gap: 13px; align-items: flex-start; border-radius: 6px; padding: 15px 17px; position: relative; background: rgba(255,181,61,0.08); border: 1px solid rgba(255,181,61,0.30); }
+  .alert::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--amber); box-shadow: 0 0 14px var(--amber); border-radius: 6px 0 0 6px; }
+  .alert .ico { color: var(--amber); font-size: 17px; line-height: 1.5; }
+  .alert .txt { font-size: 13px; color: #ffd9a0; line-height: 1.65; }
+  .alert .txt strong { font-family: var(--mono); color: var(--amber); font-weight: 700; }
 
-        .week-selector {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .week-selector-label {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .week-selector select {
-            padding: 10px 12px;
-            background: var(--bg-card);
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-width: 140px;
-        }
-
-        .week-selector select:hover {
-            border-color: var(--accent-cyan);
-        }
-
-        .week-selector select:focus {
-            outline: none;
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-        }
-
-        /* Metrics Row */
-        .metrics-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .metric-card {
-            background-color: var(--bg-card);
-            border: 1.5px solid;
-            border-image: linear-gradient(180deg, rgba(100, 180, 255, 0.4) 0%, rgba(100, 180, 255, 0) 100%) 1;
-            box-shadow: var(--shadow-sm);
-            border-radius: 14px;
-            padding: 24px;
-            position: relative;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .metric-card:hover {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 12px 32px rgba(14, 165, 233, 0.15);
-        }
-
-        .metric-card.primary {
-            border-top: 4px solid var(--accent-success);
-            border-top-left-radius: 14px;
-            border-top-right-radius: 14px;
-        }
-
-        .metric-icon {
-            font-size: 56px;
-            position: absolute;
-            top: 10px;
-            right: 14px;
-            opacity: 0.7;
-        }
-
-        .metric-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .metric-value {
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 12px;
-            line-height: 1;
-        }
-
-        .metric-change {
-            font-size: 14px;
-            font-weight: 700;
-            display: inline-block;
-            padding: 2px 0;
-        }
-
-        .metric-change.up {
-            color: var(--accent-success);
-        }
-
-        .metric-change.down {
-            color: var(--accent-danger);
-        }
-
-        /* Charts Grid */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .chart-card {
-            background-color: var(--bg-card);
-            border: 1.5px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            border-radius: 14px;
-            padding: 24px;
-            transition: all 0.3s ease;
-        }
-
-        .chart-card:hover {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 12px 32px rgba(14, 165, 233, 0.1);
-        }
-
-        .chart-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-        }
-
-        .chart-canvas {
-            position: relative;
-            height: 420px;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background-color: var(--bg-card);
-            border: 1.5px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            border-radius: 14px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .stat-subtitle {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
-
-        .comparison-section {
-            background-color: var(--bg-card);
-            border: 1.5px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            border-radius: 14px;
-            padding: 24px;
-            margin-bottom: 32px;
-        }
-
-        .section-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-        }
-
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-        }
-
-        .comparison-item {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-        }
-
-        .comparison-label {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .comparison-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .comparison-delta {
-            font-size: 12px;
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        .comparison-delta.positive {
-            color: var(--accent-success);
-        }
-
-        .comparison-delta.negative {
-            color: var(--accent-danger);
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 20px;
-            }
-
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-                margin-bottom: 24px;
-                padding-bottom: 20px;
-            }
-
-            .header-left h1 {
-                font-size: 22px;
-            }
-
-            .header-controls {
-                width: 100%;
-            }
-
-            .week-selector {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .week-selector select {
-                flex: 1;
-            }
-
-            .metrics-row {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .metric-value {
-                font-size: 2.5rem;
-            }
-
-            .chart-canvas {
-                height: 300px;
-            }
-        }
-    </style>
+  @media (max-width: 600px) {
+    .funnel { flex-wrap: wrap; row-gap: 16px; }
+    .stage { flex: 0 0 40%; }
+    .conv { flex: 0 0 100%; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .conv .line { display: none; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <h1>Uptown Cash Buyers LLC</h1>
-                <div class="header-subtitle">Weekly Performance Analytics</div>
-            </div>
-            <div class="header-controls">
-                <div class="week-selector">
-                    <span class="week-selector-label">Week</span>
-                    <select id="weekSelect"></select>
-                </div>
-            </div>
+  <div class="wrap">
+    <div class="header">
+      <div class="lhs">
+        <h1>Uptown Cash Buyers</h1>
+        <p>Weekly Performance Analytics</p>
+      </div>
+      <div class="controls">
+        <div class="wk">
+          <label for="weekSelect">Week</label>
+          <div class="sel"><select id="weekSelect"></select></div>
         </div>
-
-        <div id="content"></div>
+      </div>
     </div>
 
-    <script>
-        // ========================================
-        // EDIT YOUR DATA HERE
-        // ========================================
-        const kpiData = [
-  {
-    "weekStart": "2026-04-06",
-    "weekLabel": "Apr 6, 2026 - Apr 12, 2026",
-    "totalLeads": 16,
-    "dials": 145,
-    "convos": 3,
-    "pickUps": 19,
-    "bookedAppointments": 0,
-    "answerRate": 2.07,
-    "convToBooking": 0.00
-  },
-  {
-    "weekStart": "2026-04-13",
-    "weekLabel": "Apr 13, 2026 - Apr 19, 2026",
-    "totalLeads": 11,
-    "dials": 67,
-    "convos": 0,
-    "pickUps": 9,
-    "bookedAppointments": 0,
-    "answerRate": 0.00,
-    "convToBooking": 0.00
-  },
-  {
-    "weekStart": "2026-04-27",
-    "weekLabel": "Apr 27, 2026 - May 3, 2026",
-    "totalLeads": 33,
-    "dials": 2039,
-    "convos": 6,
-    "pickUps": 85,
-    "bookedAppointments": 0,
-    "answerRate": 0.29,
-    "convToBooking": 0.00
-  },
-  {
-    "weekStart": "2026-05-04",
-    "weekLabel": "May 4, 2026 - May 10, 2026",
-    "totalLeads": 18,
-    "dials": 1831,
-    "convos": 6,
-    "pickUps": 80,
-    "bookedAppointments": 0,
-    "answerRate": 0.33,
-    "convToBooking": 0.00
-  },
-  {
-    "weekStart": "2026-05-11",
-    "weekLabel": "May 11, 2026 - May 17, 2026",
-    "totalLeads": 20,
-    "dials": 1242,
-    "convos": 4,
-    "pickUps": 4,
-    "bookedAppointments": 1,
-    "answerRate": 0.32,
-    "convToBooking": 25.0
-  },
-  {
-    "weekStart": "2026-05-18",
-    "weekLabel": "May 18, 2026 - May 24, 2026",
-    "totalLeads": 16,
-    "dials": 754,
-    "convos": 6,
-    "pickUps": 29,
-    "bookedAppointments": 1,
-    "answerRate": 0.80,
-    "convToBooking": 16.67
+    <div class="row5">
+      <div class="card leads"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>New Leads</span></div>
+        <div class="c-value" id="v-leads">22</div>
+        <div class="rp neutral">TOP OF FUNNEL</div>
+      </div>
+      <div class="card dials"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>Dials</span></div>
+        <div class="c-value" id="v-dials">835</div>
+        <div class="rp neutral"><span id="b-dials">38.0&times;</span> <span class="lbl">/ lead</span></div>
+      </div>
+      <div class="card convos"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>Conversations</span></div>
+        <div class="c-value" id="v-convos">7</div>
+        <div class="rp neutral"><span id="b-convos">9.3%</span> <span class="lbl">of pickups</span></div>
+      </div>
+      <div class="card booked"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>Booked Appts</span></div>
+        <div class="c-value" id="v-booked">4</div>
+        <div class="rp good"><span id="b-booked">57%</span> <span class="lbl">close</span></div>
+      </div>
+    </div>
+
+    <div class="row3">
+      <div class="card pickups sm"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>Pick Ups</span></div>
+        <div class="c-value" id="v-pickups">75</div>
+        <div class="rp blue">of <span id="b-pickups">835</span> <span class="lbl">dials</span></div>
+      </div>
+      <div class="card rate sm focus"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>Answer Rate %</span><span class="tag">&#9650; FOCUS</span></div>
+        <div class="c-value" id="v-answer">9.0%</div>
+        <div class="rp warn"><span id="b-answer">75 / 835</span> <span class="lbl">dials</span></div>
+      </div>
+      <div class="card close sm"><span class="bar"></span><span class="corner"></span><span class="corner bl"></span>
+        <div class="c-label"><span>Conv to Booking %</span></div>
+        <div class="c-value" id="v-close">57.1%</div>
+        <div class="rp good"><span id="b-close">4 / 7</span> <span class="lbl">convos</span></div>
+      </div>
+    </div>
+
+    <div class="panel"><span class="corner"></span>
+      <div class="panel-title" style="display:flex; justify-content:space-between; align-items:center;"><span>// Conversion between stages</span><span id="r-overall" style="color:var(--teal);">18.2% lead &rarr; booked</span></div>
+      <div class="funnel">
+        <div class="stage"><div class="num" id="f-leads">22</div><div class="cap">Leads</div></div>
+        <div class="conv"><div class="rate" id="r-dpl">38.0&times;</div><div class="rlbl">dials/lead</div><div class="line"></div></div>
+        <div class="stage"><div class="num" id="f-dials">835</div><div class="cap">Dials</div></div>
+        <div class="conv"><div class="rate warn" id="r-pickup">9.0%</div><div class="rlbl">pickup</div><div class="line warn"></div></div>
+        <div class="stage"><div class="num" id="f-pickups">75</div><div class="cap">Pick Ups</div></div>
+        <div class="conv"><div class="rate" id="r-convo">9.3%</div><div class="rlbl">convo</div><div class="line"></div></div>
+        <div class="stage"><div class="num" id="f-convos">7</div><div class="cap">Convos</div></div>
+        <div class="conv"><div class="rate good" id="r-book">57%</div><div class="rlbl">book rate</div><div class="line"></div></div>
+        <div class="stage"><div class="num" id="f-booked">4</div><div class="cap">Booked</div></div>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="panel"><span class="corner"></span>
+        <div class="panel-title">// Dials Trend</div>
+        <div class="chart-wrap"><canvas id="dialsChart" role="img" aria-label="Line chart of weekly dials across all weeks.">Weekly dials trend.</canvas></div>
+      </div>
+      <div class="panel"><span class="corner"></span>
+        <div class="panel-title">// Sales Funnel</div>
+        <div class="chart-wrap"><canvas id="funnelChart" role="img" aria-label="Funnel bar chart of dials, pick ups, conversations, and booked for the selected week.">Funnel for selected week.</canvas></div>
+      </div>
+      <div class="panel"><span class="corner"></span>
+        <div class="panel-title">// Answer Rate % Trend</div>
+        <div class="chart-wrap"><canvas id="answerChart" role="img" aria-label="Line chart of weekly answer rate percentage across all weeks.">Answer rate trend.</canvas></div>
+      </div>
+      <div class="panel"><span class="corner"></span>
+        <div class="panel-title">// Conversion to Booking % Trend</div>
+        <div class="chart-wrap"><canvas id="bookChart" role="img" aria-label="Line chart of weekly conversation to booking percentage across all weeks.">Conversion to booking trend.</canvas></div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <div class="ico">&#9650;</div>
+      <div class="txt"><strong>BIGGEST LEVERAGE: <span id="a-dials">835</span> dials &rarr; <span id="a-pickups">75</span> pick ups (<span id="a-answer">9.0</span>% answer rate).</strong> First strong booking week of the set &mdash; once a real conversation happens it closes well. The ceiling is answer rate; test new call windows, local-presence numbers, and follow-up cadence to lift pickups.</div>
+    </div>
+
+    <p style="font-family:var(--mono); font-size:10px; color:var(--text-3); letter-spacing:0.08em; text-align:center; margin-top:6px;">8 weeks of history &middot; Apr 6 &ndash; Jun 7, 2026 &middot; select a week to view its snapshot &middot; trend charts show all weeks. (No data for week of Apr 20.)</p>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  var DATA = [
+    { wk: 'April 6, 2026 - April 12, 2026',  leads: 16, dials: 145,  pickups: 19, convos: 3, booked: 0 },
+    { wk: 'April 13, 2026 - April 19, 2026', leads: 11, dials: 67,   pickups: 9,  convos: 0, booked: 0 },
+    { wk: 'April 27, 2026 - May 3, 2026',    leads: 33, dials: 2039, pickups: 85, convos: 6, booked: 0 },
+    { wk: 'May 4, 2026 - May 10, 2026',      leads: 18, dials: 1831, pickups: 80, convos: 6, booked: 0 },
+    { wk: 'May 11, 2026 - May 17, 2026',     leads: 20, dials: 1242, pickups: 4,  convos: 4, booked: 1 },
+    { wk: 'May 18, 2026 - May 24, 2026',     leads: 16, dials: 754,  pickups: 29, convos: 6, booked: 1 },
+    { wk: 'May 25, 2026 - May 31, 2026',     leads: 9,  dials: 799,  pickups: 38, convos: 4, booked: 1 },
+    { wk: 'June 1, 2026 - June 7, 2026',     leads: 22, dials: 835,  pickups: 75, convos: 7, booked: 4 }
+  ];
+  var LABELS = ['Apr 6','Apr 13','Apr 27','May 4','May 11','May 18','May 25','Jun 1'];
+  var LAST = DATA.length - 1;
+
+  Chart.defaults.color = '#8b93a7';
+  Chart.defaults.font.family = "'JetBrains Mono', ui-monospace, monospace";
+  Chart.defaults.font.size = 11;
+  var GRID = 'rgba(255,255,255,0.05)';
+
+  var glow = { id: 'glow',
+    beforeDatasetsDraw: function(c){ c.ctx.save(); c.ctx.shadowBlur = 14; c.ctx.shadowColor = c.data.datasets[0].borderColor; },
+    afterDatasetsDraw: function(c){ c.ctx.restore(); } };
+  var pulseLine = { id: 'pulseLine',
+    afterDatasetsDraw: function(chart){
+      var meta = chart.getDatasetMeta(0); if (!meta || !meta.data.length) return;
+      var idx = (chart.$pulseIndex == null) ? meta.data.length - 1 : chart.$pulseIndex;
+      var p = meta.data[idx]; if (!p) return;
+      var t = (Date.now() % 1600) / 1600, ctx = chart.ctx, col = chart.data.datasets[0].borderColor;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4 + t * 11, 0, Math.PI * 2);
+      ctx.strokeStyle = col; ctx.globalAlpha = (1 - t) * 0.85; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = col; ctx.globalAlpha = 1; ctx.shadowColor = col; ctx.shadowBlur = 12; ctx.fill();
+      ctx.restore();
+      requestAnimationFrame(function(){ chart.draw(); });
+    } };
+  var barLabels = { id: 'barLabels',
+    afterDatasetsDraw: function(c){
+      var ctx = c.ctx, meta = c.getDatasetMeta(0);
+      ctx.save(); ctx.font = "700 12px 'JetBrains Mono', monospace"; ctx.fillStyle = '#e8ecf4'; ctx.textBaseline = 'middle';
+      meta.data.forEach(function(bar, i){ ctx.fillText(c.data.datasets[0].data[i], bar.x + 8, bar.y); });
+      ctx.restore();
+    } };
+  var pulseBar = { id: 'pulseBar',
+    afterDatasetsDraw: function(chart){
+      var meta = chart.getDatasetMeta(0); if (!meta || !meta.data.length) return;
+      var bar = meta.data[1]; if (!bar) return;
+      var t = (Date.now() % 1600) / 1600, ctx = chart.ctx;
+      ctx.save();
+      ctx.strokeStyle = '#5d9bff'; ctx.globalAlpha = (1 - t) * 0.9; ctx.lineWidth = 1 + t * 2;
+      ctx.shadowColor = '#5d9bff'; ctx.shadowBlur = 10 + t * 10;
+      var h = bar.height || 18;
+      ctx.strokeRect(bar.base, bar.y - h / 2, bar.x - bar.base, h);
+      ctx.restore();
+      requestAnimationFrame(function(){ chart.draw(); });
+    } };
+
+  function lineOpts(pct){
+    return {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 1400, easing: 'easeOutQuart' },
+      animations: { y: { from: function(ctx){ return ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min); } } },
+      interaction: { intersect: false, mode: 'index' },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(x){ return ' ' + x.formattedValue + (pct ? '%' : ''); } } } },
+      scales: { x: { grid: { color: GRID }, border: { display: false } },
+                y: { grid: { color: GRID }, border: { display: false }, beginAtZero: true, ticks: { callback: function(v){ return pct ? v + '%' : v; } } } }
+    };
   }
-];
-        // ========================================
+  function ptR(sel, n){ var a = []; for (var i = 0; i < n; i++) a.push(i === sel ? 7 : 3.5); return a; }
+  function lineSet(data, color, fill){
+    return [{ data: data, borderColor: color, backgroundColor: fill, fill: true, tension: 0.4, borderWidth: 2,
+              pointRadius: ptR(LAST, data.length), pointBackgroundColor: color, pointBorderColor: color, pointHoverRadius: 7 }];
+  }
 
-        let currentWeekIndex = kpiData.length - 1;
-        let charts = {};
+  var dialsArr  = DATA.map(function(d){ return d.dials; });
+  var answerArr = DATA.map(function(d){ return d.dials ? +(d.pickups / d.dials * 100).toFixed(1) : 0; });
+  var bookArr   = DATA.map(function(d){ return d.convos ? +(d.booked / d.convos * 100).toFixed(1) : 0; });
 
-        function getCurrentWeek() {
-            return kpiData[currentWeekIndex];
-        }
+  var charts = {};
+  charts.dialsChart = new Chart(document.getElementById('dialsChart'), {
+    type: 'line', data: { labels: LABELS, datasets: lineSet(dialsArr, '#ff5d9e', 'rgba(255,93,158,0.12)') },
+    options: lineOpts(false), plugins: [glow, pulseLine] });
+  charts.funnelChart = new Chart(document.getElementById('funnelChart'), {
+    type: 'bar', data: { labels: ['Dials','Pick Ups','Convos','Booked'], datasets: [{
+      data: [DATA[LAST].dials, DATA[LAST].pickups, DATA[LAST].convos, DATA[LAST].booked],
+      backgroundColor: ['rgba(255,93,158,0.55)','rgba(93,155,255,0.55)','rgba(47,245,200,0.55)','rgba(255,181,61,0.55)'],
+      borderColor: ['#ff5d9e','#5d9bff','#2ff5c8','#ffb53d'], borderWidth: 1.5, borderRadius: 4, barPercentage: 0.72 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      animation: { duration: 1200, easing: 'easeOutQuart', delay: function(ctx){ return ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 180 : 0; } },
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: GRID }, border: { display: false }, beginAtZero: true }, y: { grid: { display: false }, border: { display: false } } } },
+    plugins: [barLabels, pulseBar] });
+  charts.answerChart = new Chart(document.getElementById('answerChart'), {
+    type: 'line', data: { labels: LABELS, datasets: lineSet(answerArr, '#ffb53d', 'rgba(255,181,61,0.12)') },
+    options: lineOpts(true), plugins: [glow, pulseLine] });
+  charts.bookChart = new Chart(document.getElementById('bookChart'), {
+    type: 'line', data: { labels: LABELS, datasets: lineSet(bookArr, '#2ff5c8', 'rgba(47,245,200,0.12)') },
+    options: lineOpts(true), plugins: [glow, pulseLine] });
 
-        function getPreviousWeek() {
-            return currentWeekIndex > 0 ? kpiData[currentWeekIndex - 1] : null;
-        }
+  function set(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; }
+  function pct(n, d, dec){ if (!d) return '0'; return (n / d * 100).toFixed(dec === undefined ? 1 : dec); }
 
-        function getChangePercent(current, previous) {
-            if (!previous || previous === 0) return 0;
-            return ((current - previous) / previous * 100).toFixed(0);
-        }
+  function render(i){
+    var d = DATA[i];
+    set('v-leads', d.leads);
+    set('v-dials', d.dials);
+    set('b-dials', (d.dials / d.leads).toFixed(1) + '×');
+    set('v-convos', d.convos);
+    set('b-convos', pct(d.convos, d.pickups) + '%');
+    set('v-booked', d.booked);
+    set('b-booked', pct(d.booked, d.convos, 0) + '%');
+    set('v-pickups', d.pickups);
+    set('b-pickups', d.dials);
+    set('v-answer', pct(d.pickups, d.dials) + '%');
+    set('b-answer', d.pickups + ' / ' + d.dials);
+    set('v-close', pct(d.booked, d.convos) + '%');
+    set('b-close', d.booked + ' / ' + d.convos);
+    set('f-leads', d.leads); set('f-dials', d.dials); set('f-pickups', d.pickups); set('f-convos', d.convos); set('f-booked', d.booked);
+    set('r-dpl', (d.dials / d.leads).toFixed(1) + '×');
+    set('r-pickup', pct(d.pickups, d.dials) + '%');
+    set('r-convo', pct(d.convos, d.pickups) + '%');
+    set('r-book', pct(d.booked, d.convos, 0) + '%');
+    set('r-overall', pct(d.booked, d.leads) + '% lead → booked');
+    set('a-dials', d.dials); set('a-pickups', d.pickups); set('a-answer', pct(d.pickups, d.dials));
+    charts.funnelChart.data.datasets[0].data = [d.dials, d.pickups, d.convos, d.booked];
+    charts.funnelChart.update();
+    ['dialsChart','answerChart','bookChart'].forEach(function(id){
+      charts[id].$pulseIndex = i;
+      charts[id].data.datasets[0].pointRadius = ptR(i, LABELS.length);
+      charts[id].update();
+    });
+  }
 
-        function initWeekSelector() {
-            const select = document.getElementById('weekSelect');
-            kpiData.forEach((week, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = week.weekLabel;
-                select.appendChild(option);
-            });
-            select.value = currentWeekIndex;
-            select.addEventListener('change', (e) => {
-                currentWeekIndex = parseInt(e.target.value);
-                render();
-            });
-        }
+  var sel = document.getElementById('weekSelect');
+  for (var k = 0; k < DATA.length; k++){
+    var o = document.createElement('option');
+    o.value = k; o.textContent = DATA[k].wk;
+    sel.appendChild(o);
+  }
+  sel.value = LAST;
+  sel.addEventListener('change', function(){ render(parseInt(this.value, 10)); });
 
-        function render() {
-            const week = getCurrentWeek();
-            const prev = getPreviousWeek();
-            const content = document.getElementById('content');
-            let html = '';
+  Object.keys(charts).forEach(function(id){
+    document.getElementById(id).addEventListener('mouseenter', function(){ charts[id].reset(); charts[id].update(); });
+  });
 
-            // Top Metrics Row (4 KPIs)
-            html += '<div class="metrics-row">';
-
-            // Total Leads
-            const leadsChange = prev ? getChangePercent(week.totalLeads, prev.totalLeads) : 0;
-            html += `
-                <div class="metric-card primary">
-                    <div class="metric-icon">📞</div>
-                    <div>
-                        <div class="metric-label">New Leads</div>
-                        <div class="metric-value">${week.totalLeads}</div>
-                        <div class="metric-change ${leadsChange >= 0 ? 'up' : 'down'}">
-                            ${leadsChange >= 0 ? '↑' : '↓'} ${Math.abs(leadsChange)}% vs last week
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Dials
-            const dialsChange = prev ? getChangePercent(week.dials, prev.dials) : 0;
-            html += `
-                <div class="metric-card">
-                    <div class="metric-icon">📱</div>
-                    <div>
-                        <div class="metric-label">Dials</div>
-                        <div class="metric-value">${week.dials.toLocaleString()}</div>
-                        <div class="metric-change ${dialsChange >= 0 ? 'up' : 'down'}">
-                            ${dialsChange >= 0 ? '↑' : '↓'} ${Math.abs(dialsChange)}% vs last week
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Conversations
-            const convosChange = prev ? getChangePercent(week.convos, prev.convos) : 0;
-            html += `
-                <div class="metric-card">
-                    <div class="metric-icon">💬</div>
-                    <div>
-                        <div class="metric-label">Conversations</div>
-                        <div class="metric-value">${week.convos}</div>
-                        <div class="metric-change ${convosChange >= 0 ? 'up' : 'down'}">
-                            ${convosChange >= 0 ? '↑' : '↓'} ${Math.abs(convosChange)}% vs last week
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Booked Appointments
-            const bookedChange = prev ? getChangePercent(week.bookedAppointments, prev.bookedAppointments) : 0;
-            html += `
-                <div class="metric-card primary">
-                    <div class="metric-icon">✅</div>
-                    <div>
-                        <div class="metric-label">Booked Appointments</div>
-                        <div class="metric-value">${week.bookedAppointments}</div>
-                        <div class="metric-change ${bookedChange >= 0 ? 'up' : 'down'}">
-                            ${bookedChange >= 0 ? '↑' : '↓'} ${Math.abs(bookedChange)}% vs last week
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            html += '</div>';
-
-            // Charts Section
-            html += '<div class="charts-grid">';
-            html += '<div class="chart-card"><div class="chart-title">Dials Trend</div><div class="chart-canvas"><canvas id="dialsChart"></canvas></div></div>';
-            html += '<div class="chart-card"><div class="chart-title">Sales Funnel (This Week)</div><div class="chart-canvas small"><canvas id="funnelChart"></canvas></div></div>';
-            html += '<div class="chart-card"><div class="chart-title">Answer Rate % Trend</div><div class="chart-canvas"><canvas id="answerRateChart"></canvas></div></div>';
-            html += '<div class="chart-card"><div class="chart-title">Conversion to Booking % Trend</div><div class="chart-canvas"><canvas id="convBookingChart"></canvas></div></div>';
-            html += '</div>';
-
-            // Key Metrics Stats
-            html += '<div class="stats-grid">';
-            html += `<div class="stat-card"><div class="stat-label">Pick Ups</div><div class="stat-value">${week.pickUps}</div><div class="stat-subtitle">This week</div></div>`;
-            html += `<div class="stat-card"><div class="stat-label">Answer Rate %</div><div class="stat-value">${week.answerRate.toFixed(1)}%</div><div class="stat-subtitle">This week</div></div>`;
-            html += `<div class="stat-card"><div class="stat-label">Conv to Booking %</div><div class="stat-value">${week.convToBooking.toFixed(1)}%</div><div class="stat-subtitle">This week</div></div>`;
-            html += '</div>';
-
-            // Week-over-week Comparison
-            if (prev) {
-                html += `
-                    <div class="comparison-section">
-                        <div class="section-title">Week-over-Week Comparison</div>
-                        <div class="comparison-grid">
-                            <div class="comparison-item">
-                                <div class="comparison-label">Dials</div>
-                                <div class="comparison-value">${week.dials.toLocaleString()}</div>
-                                <div class="comparison-delta ${week.dials >= prev.dials ? 'positive' : 'negative'}">
-                                    ${week.dials >= prev.dials ? '↑' : '↓'} ${Math.abs(getChangePercent(week.dials, prev.dials))}%
-                                </div>
-                            </div>
-                            <div class="comparison-item">
-                                <div class="comparison-label">Convos</div>
-                                <div class="comparison-value">${week.convos}</div>
-                                <div class="comparison-delta ${week.convos >= prev.convos ? 'positive' : 'negative'}">
-                                    ${week.convos >= prev.convos ? '↑' : '↓'} ${Math.abs(getChangePercent(week.convos, prev.convos))}%
-                                </div>
-                            </div>
-                            <div class="comparison-item">
-                                <div class="comparison-label">Pick Ups</div>
-                                <div class="comparison-value">${week.pickUps}</div>
-                                <div class="comparison-delta ${week.pickUps >= prev.pickUps ? 'positive' : 'negative'}">
-                                    ${week.pickUps >= prev.pickUps ? '↑' : '↓'} ${Math.abs(getChangePercent(week.pickUps, prev.pickUps))}%
-                                </div>
-                            </div>
-                            <div class="comparison-item">
-                                <div class="comparison-label">Booked</div>
-                                <div class="comparison-value">${week.bookedAppointments}</div>
-                                <div class="comparison-delta ${week.bookedAppointments >= prev.bookedAppointments ? 'positive' : 'negative'}">
-                                    ${week.bookedAppointments >= prev.bookedAppointments ? '↑' : '↓'} ${Math.abs(getChangePercent(week.bookedAppointments, prev.bookedAppointments))}%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            content.innerHTML = html;
-
-            setTimeout(() => {
-                renderDialsChart();
-                renderFunnelChart();
-                renderAnswerRateChart();
-                renderConvBookingChart();
-            }, 100);
-        }
-
-        function renderDialsChart() {
-            const ctx = document.getElementById('dialsChart');
-            if (!ctx) return;
-            if (charts.dials) charts.dials.destroy();
-
-            const labels = kpiData.map(w => w.weekLabel);
-            const values = kpiData.map(w => w.dials);
-
-            charts.dials = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Dials',
-                        data: values,
-                        borderColor: '#0EA5E9',
-                        backgroundColor: 'rgba(14, 165, 233, 0.08)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#0EA5E9',
-                        pointBorderColor: '#1A202C',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 7
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, filler: { propagate: true } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(255, 255, 255, 0.08)', drawBorder: false },
-                            ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 } }
-                        },
-                        x: {
-                            ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 }, maxRotation: -45, minRotation: -45 },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderFunnelChart() {
-            const ctx = document.getElementById('funnelChart');
-            if (!ctx) return;
-            if (charts.funnel) charts.funnel.destroy();
-
-            const week = getCurrentWeek();
-            const data = [week.dials, week.convos, week.pickUps, week.bookedAppointments];
-            const labels = ['Dials', 'Convos', 'Pick Ups', 'Booked'];
-            const colors = ['#0EA5E9', '#3B82F6', '#EC4899', '#00D97E'];
-
-            charts.funnel = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Count', data, backgroundColor: colors, borderRadius: 6, borderSkipped: false, barPercentage: 0.7 }] },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.08)', drawBorder: false }, ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 } } },
-                        y: { ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 } }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        function renderAnswerRateChart() {
-            const ctx = document.getElementById('answerRateChart');
-            if (!ctx) return;
-            if (charts.answerRate) charts.answerRate.destroy();
-
-            const labels = kpiData.map(w => w.weekLabel);
-            const values = kpiData.map(w => w.answerRate);
-
-            charts.answerRate = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'Answer Rate %', data: values, borderColor: '#00D97E', backgroundColor: 'rgba(0, 217, 126, 0.08)', borderWidth: 3, tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#00D97E', pointBorderColor: '#1A202C', pointBorderWidth: 2 }] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255, 255, 255, 0.08)', drawBorder: false }, ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 } } },
-                        x: { ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 }, maxRotation: -45, minRotation: -45 }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        function renderConvBookingChart() {
-            const ctx = document.getElementById('convBookingChart');
-            if (!ctx) return;
-            if (charts.convBooking) charts.convBooking.destroy();
-
-            const labels = kpiData.map(w => w.weekLabel);
-            const values = kpiData.map(w => w.convToBooking);
-
-            charts.convBooking = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'Conv to Booking %', data: values, borderColor: '#EC4899', backgroundColor: 'rgba(236, 72, 153, 0.08)', borderWidth: 3, tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#EC4899', pointBorderColor: '#1A202C', pointBorderWidth: 2 }] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 50, grid: { color: 'rgba(255, 255, 255, 0.08)', drawBorder: false }, ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 } } },
-                        x: { ticks: { color: 'rgba(255, 255, 255, 0.7)', font: { size: 11 }, maxRotation: -45, minRotation: -45 }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        initWeekSelector();
-        render();
-    </script>
+  render(LAST);
+</script>
 </body>
 </html>
